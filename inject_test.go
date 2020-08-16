@@ -1,5 +1,6 @@
 // Copyright 2013 Jeremy Saenz
 // Copyright 2015 The Macaron Authors
+// Copyright 2020 the Emmanuel developers
 //
 // Licensed under the Apache License, Version 2.0 (the "License"): you may
 // not use this file except in compliance with the License. You may obtain
@@ -20,7 +21,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/go-macaron/inject"
+	"github.com/go-emmanuel/inject"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -159,6 +160,31 @@ func Test_Injector_GetVal(t *testing.T) {
 
 		So(injector.GetVal(reflect.TypeOf("string")).IsValid(), ShouldBeTrue)
 		So(injector.GetVal(reflect.TypeOf(11)).IsValid(), ShouldBeFalse)
+	})
+}
+
+func Test_Injector_Clear(t *testing.T) {
+	Convey("Clear", t, func() {
+		injector := inject.New()
+		So(injector, ShouldNotBeNil)
+
+		injector.Map("some dependency")
+
+		So(injector.GetVal(reflect.TypeOf("string")).IsValid(), ShouldBeTrue)
+		injector.Clear()
+		So(injector.GetVal(reflect.TypeOf("string")).IsValid(), ShouldBeFalse)
+
+		Convey("with parent", func() {
+			injector2 := inject.New()
+			So(injector, ShouldNotBeNil)
+			injector.MapTo("another dep", (*SpecialString)(nil))
+
+			injector2.SetParent(injector)
+
+			So(injector2.GetVal(inject.InterfaceOf((*SpecialString)(nil))).IsValid(), ShouldBeTrue)
+			injector.Clear()
+			So(injector2.GetVal(inject.InterfaceOf((*SpecialString)(nil))).IsValid(), ShouldBeFalse)
+		})
 	})
 }
 
